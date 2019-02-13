@@ -11,8 +11,12 @@ import (
 
 func process(startpath string, dirMode os.FileMode, fileMode os.FileMode) error {
 	return filepath.Walk(startpath, func(fspc string, info os.FileInfo, err error) error {
+		if *verbose {
+			fmt.Printf("check     %s\n", fspc)
+		}
 		if err != nil {
-			return err
+			fmt.Fprintln(os.Stderr, err)
+			return nil
 		}
 		mode := info.Mode()
 		if mode.IsDir() {
@@ -24,18 +28,30 @@ func process(startpath string, dirMode os.FileMode, fileMode os.FileMode) error 
 				return filepath.SkipDir
 			}
 			if mode != (dirMode + os.ModeDir) {
-				os.Chmod(fspc, dirMode)
-				if *verbose {
-					fmt.Printf("chmod %#o %s\n", dirMode, fspc)
+				if !*dryrun {
+					if *verbose {
+						fmt.Printf("chmod %#o %s\n", dirMode, fspc)
+					}
+					err := os.Chmod(fspc, dirMode)
+					if err != nil {
+						fmt.Fprintln(os.Stderr, err)
+					}
+					return nil
 				}
 			}
 			return nil
 		}
 		if mode.IsRegular() {
 			if mode != fileMode {
-				os.Chmod(fspc, fileMode)
-				if *verbose {
-					fmt.Printf("chmod %#o %s\n", fileMode, fspc)
+				if !*dryrun {
+					if *verbose {
+						fmt.Printf("chmod %#o %s\n", fileMode, fspc)
+					}
+					err := os.Chmod(fspc, fileMode)
+					if err != nil {
+						fmt.Fprintln(os.Stderr, err)
+					}
+					return nil
 				}
 			}
 		}
@@ -44,6 +60,7 @@ func process(startpath string, dirMode os.FileMode, fileMode os.FileMode) error 
 }
 
 var verbose = flag.Bool("v", false, "run in verbose mode")
+var dryrun = flag.Bool("dryrun", false, "run in dry run mode (don't actually chmod anything)")
 
 func main() {
 

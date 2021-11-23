@@ -21,7 +21,9 @@ func process(startpath string, dirMode os.FileMode, fileMode os.FileMode) error 
 		mode := info.Mode()
 		if mode.IsDir() {
 			fname := filepath.Base(fspc)
-			if strings.HasPrefix(fname, "@") || strings.HasPrefix(fname, ".") {
+			if strings.HasPrefix(fname, "@") ||
+				(strings.HasPrefix(fname, ".") && fname != ".") ||
+				fname == "#recycle" {
 				if *verbose {
 					fmt.Printf(" skip     %s\n", fspc)
 				}
